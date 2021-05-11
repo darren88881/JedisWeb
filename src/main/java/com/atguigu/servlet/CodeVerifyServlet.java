@@ -21,26 +21,22 @@ public class CodeVerifyServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
-        // 获取手机号
-        String phone_num = request.getParameter("phone_no");
-        String sender_code = request.getParameter("verify_code");
-
-        // 验证参数是否合法
-        if (phone_num == null || phone_num.equals("") || sender_code == null || sender_code.equals("")) {
+        String phone_no = request.getParameter("phone_no");
+        String verify_code = request.getParameter("verify_code");
+        if (phone_no == null || verify_code == null || phone_no == "" || verify_code == "") {
             response.getWriter().print(false);
             return;
         }
-
-        // 生成key
-        String key = VerifyCodeConfig.PHONE_PREFIX + phone_num + VerifyCodeConfig.PHONE_SUFFIX;
         Jedis jedis = new Jedis(VerifyCodeConfig.HOST, VerifyCodeConfig.PORT, 20000);
-        String query_code = jedis.get(key);
-        jedis.close();
 
-        if (sender_code.equals(query_code)) {
+        String key = VerifyCodeConfig.PHONE_PREFIX+phone_no+VerifyCodeConfig.PHONE_SUFFIX;
+        String value = jedis.get(key);
+
+        if (verify_code.equals(value)) {
             response.getWriter().print(true);
         } else {
             response.getWriter().print(false);
         }
+
     }
 }

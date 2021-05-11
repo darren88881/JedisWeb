@@ -17,59 +17,59 @@ public class CodeSenderServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        // 获取手机号
-        String phone_num = request.getParameter("phone_no");
-        // 验证参数是否合法
-        if (phone_num == null || phone_num.equals("")) {
+        // 1:获取手机号
+        String phone_no = request.getParameter("phone_no");
+
+        if (phone_no == null || phone_no == "") {
             response.getWriter().print(false);
             return;
         }
-
+        // 2:生成key
+        String key = VerifyCodeConfig.PHONE_PREFIX+phone_no+VerifyCodeConfig.PHONE_SUFFIX;
+        // 3:生成value
+        String value =getCode(6);
+        // 4:存储到redis
         Jedis jedis = new Jedis(VerifyCodeConfig.HOST, VerifyCodeConfig.PORT, 20000);
-        // 判断用户是否超过次数在生成验证码之前
-        // 生成计数的key
-        String count_key = phone_num + VerifyCodeConfig.COUNT_SUFFIX;
-        String count_value = jedis.get(count_key);
 
-        if (count_value != null) {
-            int count_int = Integer.parseInt(count_value);
-            //最多三次机会
-            if (count_int >= 3) {
-                jedis.close();
+        // 手机号发送短信不能超过3次
+        // 生成次数key
+        String count_key  = phone_no+VerifyCodeConfig.COUNT_SUFFIX;
+        String count_value = jedis.get(count_key);
+        if ( count_value != null) {
+            int anInt = Integer.parseInt(count_value);
+            if (anInt >=3) {
                 response.getWriter().print("limit");
                 return;
             } else {
                 jedis.incr(count_key);
             }
+
         } else {
-            //设置有效期为1天
-            jedis.setex(count_key, VerifyCodeConfig.SECONDS_PER_DAY, "1");
+            jedis.setex(count_key,VerifyCodeConfig.SECONDS_PER_DAY,"1");
         }
 
-        // 生成验证码
-        String code = genCode(6);
-        // 生成key
-        String key = VerifyCodeConfig.PHONE_PREFIX + phone_num + VerifyCodeConfig.PHONE_SUFFIX;
-        // 存储验证码
-        jedis.setex(key, VerifyCodeConfig.CODE_TIMEOUT, code);
-        jedis.close();
+        jedis.setex(key,VerifyCodeConfig.CODE_TIMEOUT,value);
 
         // 模拟发送短信
-        System.out.println("尊敬的" + phone_num + "用户，您的验证码是：" + code + ",2分钟内有效，请不要告诉任何人！");
-        System.out.println(key + ":" + code);
+        System.out.println("key:"+key+";value:"+value);
+
+        // 返回true
         response.getWriter().print(true);
     }
 
+    /**
+     * 生成验证码
+     *
+     * @param num 位数
+     * @return String
+     */
+    public static String getCode(int num){
 
-    //生成n位数字验证码
-    private String genCode(int len) {
         String code = "";
-        for (int i = 0; i < len; i++) {
-            int rand = new Random().nextInt(10);
-            code += rand;
+        for(int i =0;i<num;i++){
+            code+= new Random().nextInt(10);
         }
         return code;
     }
-
 
 }

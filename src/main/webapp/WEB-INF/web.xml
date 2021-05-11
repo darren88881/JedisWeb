@@ -32,4 +32,14 @@
     <url-pattern>/CodeVerifyServlet</url-pattern>
   </servlet-mapping>
 
+  <servlet>
+    <description></description>
+    <display-name>doseckill</display-name>
+    <servlet-name>doseckill</servlet-name>
+    <servlet-class>com.atguigu.servlet.SecKillServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>doseckill</servlet-name>
+    <url-pattern>/doseckill</url-pattern>
+  </servlet-mapping>
 </web-app>
